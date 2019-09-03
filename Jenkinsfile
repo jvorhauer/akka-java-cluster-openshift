@@ -27,10 +27,10 @@ pipeline {
             commitId = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
           }
           script {
-            vers = sh(returnStdout: true, script: './mvnw help:evaluate -q -Dexpression=project.version -DforceStdout').trim()
+            vers = sh(returnStdout: true, script: 'unset JAVA_TOOL_OPTIONS && ./mvnw help:evaluate -q -Dexpression=project.version -DforceStdout').trim()
             echo "project.version: ${vers}"
           }
-          sh './mvnw clean test'
+          sh 'unset JAVA_TOOL_OPTIONS && ./mvnw clean test'
         }
       }
       post {
@@ -44,7 +44,7 @@ pipeline {
     stage('Jar') {
       steps {
         timestamps {
-          sh './mvnw package'
+          sh 'unset JAVA_TOOL_OPTIONS && ./mvnw package'
         }
       }
     }
@@ -100,7 +100,7 @@ pipeline {
           sleep 10
           openshift.withCluster() {
             openshift.withCredentials('ansible-token-reboot') {
-              openshift.withProject('reboot-tst'){
+              openshift.withProject('juvor-spike'){
                 def latestDeploymentVersion = openshift.selector('dc', APP_NAME).object().status.latestVersion
                 def rc = openshift.selector('rc', "${APP_NAME}-${latestDeploymentVersion}")
                 rc.untilEach(1){
