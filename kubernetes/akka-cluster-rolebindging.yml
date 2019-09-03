@@ -2,7 +2,7 @@ kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: pod-reader
-  namespace: akka-cluster-1
+  namespace: juvor-spike
 rules:
   - apiGroups: [""] # "" indicates the core API group
     resources: ["pods"]
@@ -12,11 +12,11 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: read-pods
-  namespace: akka-cluster-1
+  namespace: juvor-spike
 subjects:
   # Create the default user for the akka-cluster-1 namespace
   - kind: User
-    name: system:serviceaccount:akka-cluster-1:default
+    name: system:serviceaccount:juvor-spike:default
 roleRef:
   kind: Role
   name: pod-reader

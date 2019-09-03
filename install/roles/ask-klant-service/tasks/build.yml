@@ -1,0 +1,63 @@
+---
+
+- name: Install de ImageStream voor de applicatie
+  when: omgeving == "build"
+  oc:
+    host: "{{ oc_props.host }}"
+    token: "{{ oc_props.token }}"
+    validate_certs: False
+    state: present
+    inline:
+      apiVersion: v1
+      kind: ImageStream
+      metadata:
+        name: "{{ oc_props.project }}"
+        namespace: "{{ oc_props.namespace }}"
+
+
+- name: Create applicatie BuildConfig
+  tags: build
+  when: omgeving == "build"
+  oc:
+    host: "{{ oc_props.host }}"
+    token: "{{ oc_props.token }}"
+    validate_certs: False
+    state: present
+    inline:
+      apiVersion: v1
+      kind: BuildConfig
+      metadata:
+        namespace: "{{ oc_props.namespace }}"
+        annotations:
+          git_ref: "{{ git_info.after }}"
+        labels:
+          app: "{{ oc_props.project }}"
+        name: "{{ oc_props.project }}"
+      spec:
+        nodeSelector: null
+        output:
+          to:
+            kind: ImageStreamTag
+            name: "{{ oc_props.project }}:latest"
+        runPolicy: Serial
+        source:
+          git:
+            ref: master
+            uri: 'https://github.com/jvorhauer/akka-java-cluster-openshift'
+          sourceSecret:
+            name: reboot-source-build
+          type: Git
+        strategy:
+          type: Source
+          sourceStrategy:
+            from:
+              kind: ImageStreamTag
+              name: java:11
+              namespace: openshift
+        triggers:
+        - github:
+            secret: FgEiMhbJMXuVZU6x
+          type: GitHub
+        - imageChange: {}
+          type: ImageChange
+        - type: ConfigChange

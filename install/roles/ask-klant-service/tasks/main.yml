@@ -1,0 +1,18 @@
+---
+- git:
+    repo: .
+    clone: no
+    update: no
+  register: git_info
+
+- debug: var=git_info
+- debug: var=omgeving
+
+- name: Build
+  when: omgeving == "build"
+  include_tasks: build.yml
+
+- name: Run Install
+  when: omgeving != "build"
+  include_tasks: install.yml
+

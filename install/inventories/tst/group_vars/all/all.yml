@@ -1,0 +1,18 @@
+oc_props:
+  host: liander01.openshift.openline.nl
+  token: "{{vault_token}}"
+  validate_certs: False
+  namespace: juvor-spike
+  project: akka-cluster-demo
+
+omgeving: tst
+
+application:
+  instances: 3
+  resources:
+    limits:
+      memory: 512Mi
+      cpu: 500m
+    requests:
+      memory: 512Mi
+      cpu: 200m

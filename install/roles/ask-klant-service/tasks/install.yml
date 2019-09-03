@@ -1,0 +1,184 @@
+---
+
+- name: Install Routes
+  tags: build
+  when: omgeving == "tst"
+  oc:
+    host: "{{ oc_props.host }}"
+    token: "{{ oc_props.token }}"
+    validate_certs: "{{ oc_props.validate_certs }}"
+    state: present
+    inline:
+      apiVersion: v1
+      kind: Route
+      metadata:
+        name: "{{ oc_props.project }}"
+        namespace: "{{ oc_props.namespace }}"
+        annotations:
+          git_ref: "{{ git_info.after }}"
+        labels:
+          app: "{{ oc_props.project }}"
+      spec:
+        host: "{{ oc_props.project }}.web.liander.nl"
+        port:
+          targetPort: "8280-tcp"
+        tls:
+          insecureEdgeTerminationPolicy: Redirect
+        to:
+          kind: Service
+          name: "{{ oc_props.project }}"
+          weight: 100
+        wildcardPolicy: None
+
+
+- name: Install service
+  tags: build
+  when: omgeving != "build"
+  oc:
+    host: "{{ oc_props.host }}"
+    token: "{{ oc_props.token }}"
+    validate_certs: "{{ oc_props.validate_certs }}"
+    state: present
+    inline:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "{{ oc_props.project }}"
+        namespace: "{{ oc_props.namespace }}"
+        annotations:
+          git_ref: "{{ git_info.after }}"
+        labels:
+          app: "{{ oc_props.project }}"
+      spec:
+        ports:
+        - name: 8280-tcp
+          protocol: TCP
+          port: 8280
+          targetPort: 8280
+        selector:
+          deploymentconfig: "{{ oc_props.project }}"
+        sessionAffinity: None
+        type: ClusterIP
+
+
+- name: Install management service
+  tags: build
+  when: omgeving != "build"
+  oc:
+    host: "{{ oc_props.host }}"
+    token: "{{ oc_props.token }}"
+    validate_certs: "{{ oc_props.validate_certs }}"
+    state: present
+    inline:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "{{ oc_props.project }}"
+        namespace: "{{ oc_props.namespace }}"
+        annotations:
+          git_ref: "{{ git_info.after }}"
+        labels:
+          app: "{{ oc_props.project }}"
+      spec:
+        ports:
+          - name: 8080-tcp
+            protocol: TCP
+            port: 8080
+            targetPort: 8080
+          - name: 2552-tcp
+            protocol: TCP
+            port: 2552
+            targetPort: 2552
+          - name: 8558-tcp
+            protocol: TCP
+            port: 8558
+            targetPort: 8558
+        selector:
+          deploymentconfig: "{{ oc_props.project }}"
+        sessionAffinity: None
+        type: ClusterIP
+
+
+- name: Install de DeploymentConfig
+  tags: build
+  when: omgeving != "build"
+  oc:
+    host: "{{ oc_props.host }}"
+    token: "{{ oc_props.token }}"
+    validate_certs: "{{ oc_props.validate_certs }}"
+    state: present
+    inline:
+      apiVersion: v1
+      kind: DeploymentConfig
+      metadata:
+        name: "{{ oc_props.project }}"
+        namespace: "{{ oc_props.namespace }}"
+        annotations:
+          git_ref: "{{ git_info.after }}"
+        labels:
+          app: "{{ oc_props.project }}"
+      spec:
+        replicas: "{{ application.instances }}"
+        selector:
+          deploymentconfig: "{{ oc_props.project }}"
+        strategy:
+          activeDeadlineSeconds: 21600
+          resources: {}
+          rollingParams:
+            intervalSeconds: 1
+            maxSurge: 25%
+            maxUnavailable: 25%
+            timeoutSeconds: 600
+            updatePeriodSeconds: 1
+          type: Rolling
+        template:
+          metadata:
+            labels:
+              app: "{{ oc_props.project }}"
+              deploymentconfig: "{{ oc_props.project }}"
+          spec:
+            containers:
+            - env:
+              image: "{{ oc_props.namespace }}/{{ oc_props.project }}:{{ omgeving }}"
+              imagePullPolicy: IfNotPresent
+              name: "{{ oc_props.project }}"
+              ports:
+              - containerPort: 8080
+                protocol: TCP
+              resources: "{{ application.resources }}"
+              livenessProbe:
+                tcpSocket:
+                  port: 8558
+                initialDelaySeconds: 120
+                periodSeconds: 60
+                successThreshold: 1
+                timeoutSeconds: 30
+              readinessProbe:
+                tcpSocket:
+                  port: 8558
+                initialDelaySeconds: 3
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 30
+            dnsPolicy: ClusterFirst
+            restartPolicy: Always
+            schedulerName: default-scheduler
+            securityContext: {}
+            terminationGracePeriodSeconds: 30
+            volumes:
+              - configMap:
+                  defaultMode: 420
+                  name: ask-klant-service
+                name: volume-configmap
+        test: false
+        triggers:
+        - type: ImageChange
+          imageChangeParams:
+            automatic: true
+            containerNames:
+            - "{{ oc_props.project }}"
+            from:
+              kind: ImageStreamTag
+              name: "{{ oc_props.project }}:{{ omgeving }}"
+              namespace: "{{ oc_props.namespace }}"
+        - type: ConfigChange

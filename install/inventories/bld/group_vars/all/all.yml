@@ -1,0 +1,6 @@
+oc_props:
+  host: liander01.openshift.openline.nl
+  token: "{{vault_token}}"
+  validate_certs: False
+
+omgeving: build

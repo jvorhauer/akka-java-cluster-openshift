@@ -89,7 +89,7 @@ pipeline {
       }
     }
 
-    stage('Deploy Test') {
+    stage('Deploy Tst') {
       steps {
         script {
            openshift.withCluster() {
@@ -97,100 +97,21 @@ pipeline {
            }
         }
         script {
-            sleep 10
-            openshift.withCluster() {
-                openshift.withCredentials('ansible-token-reboot') {
-                  openshift.withProject('reboot-tst'){
-                    def latestDeploymentVersion = openshift.selector('dc', APP_NAME).object().status.latestVersion
-                    def rc = openshift.selector('rc', "${APP_NAME}-${latestDeploymentVersion}")
-                    rc.untilEach(1){
-                      def rcMap = it.object()
-                      return (rcMap.status.replicas.equals(rcMap.status.readyReplicas))
-                    }
-                  }
+          sleep 10
+          openshift.withCluster() {
+            openshift.withCredentials('ansible-token-reboot') {
+              openshift.withProject('reboot-tst'){
+                def latestDeploymentVersion = openshift.selector('dc', APP_NAME).object().status.latestVersion
+                def rc = openshift.selector('rc', "${APP_NAME}-${latestDeploymentVersion}")
+                rc.untilEach(1){
+                  def rcMap = it.object()
+                  return (rcMap.status.replicas.equals(rcMap.status.readyReplicas))
                 }
+              }
             }
+          }
         }
       }
     }
-
-    stage('Config Acc') {
-      when { anyOf { branch 'develop'; branch 'master' } }
-      steps {
-        ansiColor('xterm') {
-          ansiblePlaybook(
-              installation: 'ansible-playbook',
-              inventory: 'install/inventories/acc',
-              playbook: 'install/site.yml',
-              colorized: true)
-        }
-      }
-    }
-
-    stage('Deploy Acc') {
-      when { anyOf { branch 'develop'; branch 'master' } }
-      steps {
-          script {
-                    openshift.withCluster() {
-                       openshift.tag("${APP_NAME}:tst", "${APP_NAME}:acc")
-                    }
-          }
-          script {
-             sleep 10
-             openshift.withCluster() {
-                 openshift.withCredentials('ansible-token-reboot') {
-                   openshift.withProject('reboot-acc'){
-                     def latestDeploymentVersion = openshift.selector('dc', APP_NAME).object().status.latestVersion
-                     def rc = openshift.selector('rc', "${APP_NAME}-${latestDeploymentVersion}")
-                     rc.untilEach(1){
-                       def rcMap = it.object()
-                       return (rcMap.status.replicas.equals(rcMap.status.readyReplicas))
-                     }
-                   }
-                 }
-             }
-          }
-      }
-    }
-
-    stage('Config Prod') {
-      when { anyOf { branch 'master' } }
-      steps {
-        ansiColor('xterm') {
-          ansiblePlaybook(
-              installation: 'ansible-playbook',
-              inventory: 'install/inventories/prd',
-              playbook: 'install/site.yml',
-              colorized: true)
-        }
-      }
-    }
-
-    stage('Deploy Prod') {
-      when { anyOf { branch 'master' } }
-      steps {
-          script {
-                    openshift.withCluster() {
-                       openshift.tag("${APP_NAME}:acc", "${APP_NAME}:prd")
-                    }
-          }
-          script {
-             sleep 10
-             openshift.withCluster() {
-                 openshift.withCredentials('ansible-token-reboot') {
-                   openshift.withProject('reboot-prd'){
-                     def latestDeploymentVersion = openshift.selector('dc', APP_NAME).object().status.latestVersion
-                     def rc = openshift.selector('rc', "${APP_NAME}-${latestDeploymentVersion}")
-                     rc.untilEach(1){
-                       def rcMap = it.object()
-                       return (rcMap.status.replicas.equals(rcMap.status.readyReplicas))
-                     }
-                   }
-                 }
-             }
-          }
-      }
-    }
-
   }
 }
