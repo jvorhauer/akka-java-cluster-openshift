@@ -16,11 +16,6 @@
     <akka.http.version>10.1.9</akka.http.version>
     <akka.cluster.bootstrap.version>1.0.0</akka.cluster.bootstrap.version>
     <docker.image.version>1.0.2</docker.image.version>
-    <junit.version>4.12</junit.version>
-    <junit.jupiter.version>5.0.2</junit.jupiter.version>
-    <junit.vintage.version>${junit.version}.0</junit.vintage.version>
-    <junit.jupiter.version>5.0.2</junit.jupiter.version>
-    <junit.platform.version>1.0.0</junit.platform.version>
   </properties>
 
   <dependencies>
@@ -95,36 +90,36 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.9.9</version>
+      <version>2.11.4</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.9.9.3</version>
+      <version>2.11.4</version>
     </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit.jupiter.version}</version>
+      <version>5.7.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
+      <version>4.13.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-runner</artifactId>
-      <version>${junit.platform.version}</version>
+      <version>1.7.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.vintage</groupId>
       <artifactId>junit-vintage-engine</artifactId>
-      <version>${junit.vintage.version}</version>
+      <version>5.7.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -149,7 +144,7 @@
           <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-surefire-provider</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.3</version>
           </dependency>
         </dependencies>
       </plugin>
@@ -160,7 +155,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>1.5</version>
+        <version>3.2.4</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -195,7 +190,7 @@
       <plugin>
         <groupId>io.fabric8</groupId>
         <artifactId>docker-maven-plugin</artifactId>
-        <version>0.27.2</version>
+        <version>0.31.0</version>
         <configuration>
           <images>
             <image>
